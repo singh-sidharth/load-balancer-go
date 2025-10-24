@@ -1,0 +1,31 @@
+# Binaries
+/bin/
+/build/
+/*.exe
+/*.exe~
+/*.dll
+/*.so
+/*.dylib
+
+# Test binaries
+*.test
+
+# Output of 'go build' and 'go install'
+*.out
+
+# Dependency directories
+/vendor/
+
+# Go module cache
+/go.sum
+
+# Editor/IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*.DS_Store
+
+# Logs
+*.log
+/logs/
