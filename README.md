@@ -80,6 +80,7 @@ Requests should be distributed across backends
 ## Current Limitations
 
 - No retry or failover logic on request failure
+- No failover for in-flight requests
 - No rate limiting or backpressure control
 - No observability (metrics/log aggregation)
 - Static backend configuration (hardcoded)

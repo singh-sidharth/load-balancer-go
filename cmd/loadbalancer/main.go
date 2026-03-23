@@ -39,8 +39,20 @@ func main() {
 		servers = append(servers, srv)
 	}
 
+	// Do an initial synchronous health check before serving traffic.
+	// This avoids routing requests based on assumed backend state.
+	healthClient := &http.Client{
+		Timeout: 1 * time.Second,
+	}
+
+	for _, srv := range servers {
+		healthy := server.CheckHealth(srv, healthClient)
+		log.Printf("initial health check: backend=%s healthy=%t", srv.Address(), healthy)
+	}
+
 	lb := balancer.New(servers)
 
+	// Keep backend health state fresh in the background.
 	go server.StartHealthCheck(servers, 5*time.Second)
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

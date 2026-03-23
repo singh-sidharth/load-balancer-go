@@ -8,6 +8,7 @@ import (
 func CheckHealth(s Server, client *http.Client) bool {
 	resp, err := client.Get(s.Address() + "/health")
 	if err != nil {
+		s.SetAlive(false)
 		return false
 	}
 	defer resp.Body.Close()
