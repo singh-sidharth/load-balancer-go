@@ -7,12 +7,16 @@ import (
 
 func CheckHealth(s Server, client *http.Client) bool {
 	resp, err := client.Get(s.Address() + "/health")
+
+	//health check failed, mark server as unhealthy
+	//failure is when backend it not reachable due to network error, timeout...
 	if err != nil {
 		s.SetAlive(false)
 		return false
 	}
 	defer resp.Body.Close()
 
+	// failure when backend is reachable
 	healthy := resp.StatusCode >= 200 && resp.StatusCode < 300
 	s.SetAlive(healthy)
 
