@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/singh-sidharth/load-balancer/internal/balancer"
@@ -56,7 +57,10 @@ func main() {
 
 	})
 
-	serverAddr := ":8080"
+	serverAddr := os.Getenv("PORT")
+	if serverAddr == "" {
+		serverAddr = "8080"
+	}
 
 	log.Printf("load balancer listening on %s", serverAddr)
 
