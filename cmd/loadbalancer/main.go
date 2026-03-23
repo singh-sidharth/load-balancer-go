@@ -62,6 +62,9 @@ func main() {
 		serverAddr = "8080"
 	}
 
+	// update with
+	serverAddr = ":" + serverAddr
+
 	log.Printf("load balancer listening on %s", serverAddr)
 
 	if err := http.ListenAndServe(serverAddr, handler); err != nil {
