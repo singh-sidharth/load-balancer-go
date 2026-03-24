@@ -36,6 +36,7 @@ cmd/loadbalancer/   # load balancer entrypoint
 cmd/backend/        # simple backend server for testing
 internal/balancer/  # load balancing logic
 internal/server/    # backend abstraction and proxying
+scripts/            # load and failure test helpers
 ```
 
 ## How it works
@@ -141,6 +142,24 @@ go install github.com/rakyll/hey@latest
 ```
 
 > Make sure your Go bin directory is in your **PATH** after using go install.
+
+## Failure Testing
+
+This project includes scripts to simulate backend failure during active load.
+
+### Scripts
+
+- `scripts/run_failover_test.sh`  
+  Starts local backends and the load balancer, schedules backend termination, and runs a timed load test.
+
+- `scripts/kill_backend_after.sh`  
+  Terminates a backend listener on a given port after a configured delay.
+
+### Example: fail backend `8083` during load
+
+```bash
+./scripts/run_failover_test.sh 8083 2 5s 100
+```
 
 ## Current Limitations
 
