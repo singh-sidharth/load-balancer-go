@@ -36,7 +36,7 @@ func New(rawURL string) (*BackendServer, error) {
 
 	s := &BackendServer{
 		url:   parsedURL,
-		alive: true,
+		alive: false,
 	}
 
 	transport := &http.Transport{
