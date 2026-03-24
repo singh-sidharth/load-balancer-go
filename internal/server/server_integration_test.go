@@ -26,6 +26,7 @@ func getFreePort(t *testing.T) string {
 }
 
 func TestProxyFailureMarksBackendUnhealthyAndNextRequestFailsOver(t *testing.T) {
+	// Set up a healthy backend server that responds to both "/" and "/health".
 	healthyBackend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/health":
@@ -53,6 +54,8 @@ func TestProxyFailureMarksBackendUnhealthyAndNextRequestFailsOver(t *testing.T) 
 	}
 
 	// Force both to appear healthy initially so round robin may choose the dead one.
+	// The timout is 5 second before next health check, so this simulates a request arriving
+	// before the health check detects the failure.
 	deadBackend.SetAlive(true)
 	liveBackend.SetAlive(true)
 
