@@ -2,17 +2,15 @@
 
 ## Overview
 
-A simple reverse proxy load balancer built in Go to explore request routing, concurrency, and backend health management.
+Reverse proxy load balancer in Go with active health checks, health-aware routing, and passive failure detection.
+
+The system routes requests across multiple backends, avoids unhealthy servers, and updates backend health dynamically based on both periodic checks and real request failures.
 
 ## Why I built this
 
-I wanted a hands-on Go project around networking and systems concepts rather than a CRUD app. This project helped me practice:
+I wanted to build a small but realistic systems component that models how production load balancers handle routing, health checks, and failure scenarios.
 
-- Go project structure with `cmd/` and `internal/`
-- reverse proxying with `net/http/httputil`
-- round-robin load balancing
-- health-aware routing
-- background health checks and shared state coordination
+This project focuses on correctness, failure handling, and state management rather than just request forwarding.
 
 ## Features
 
@@ -20,6 +18,8 @@ I wanted a hands-on Go project around networking and systems concepts rather tha
 - Round-robin load balancing
 - Active health checks (`/health` endpoint)
 - Health-aware backend selection
+- Passive failure detection (mark backend unhealthy on proxy errors)
+- Fail-fast behavior using upstream timeouts
 - Returns `503 Service Unavailable` when no backends are healthy
 - Backend abstraction via interface
 
@@ -40,11 +40,13 @@ internal/server/    # backend abstraction and proxying
 
 ## How it works
 
-1. The load balancer maintains a list of backend servers.
-2. A background goroutine periodically checks backend health.
-3. Each request selects the next healthy backend using round-robin.
-4. Requests are proxied to the selected backend.
-5. If no backend is healthy, a `503` response is returned.
+1. The load balancer maintains a set of backend servers and their health state.
+2. An initial synchronous health check ensures correct routing at startup.
+3. A background goroutine continuously updates backend health.
+4. Each request selects the next healthy backend using round-robin.
+5. Requests are proxied using `httputil.ReverseProxy`.
+6. If a backend fails during request forwarding, it is marked unhealthy (passive check).
+7. If no healthy backends are available, a `503` response is returned.
 
 ## Running the project
 
@@ -79,16 +81,16 @@ Requests should be distributed across backends
 
 ## Current Limitations
 
-- No retry or failover logic on request failure
-- No failover for in-flight requests
+- No retry logic for failed requests (fail-fast on upstream failure)
+- No safe retry for idempotent requests
 - No rate limiting or backpressure control
-- No observability (metrics/log aggregation)
+- No observability (metrics, tracing, structured logs)
 - Static backend configuration (hardcoded)
 
 ## Future Improvements
 
+- Safe retry for idempotent requests (e.g., GET)
 - Config-driven backend management (JSON/env)
-- Retry with exponential backoff and jitter
-- Passive health checks (marking failures on proxy errors)
+- Per-backend concurrency limits (bulkheading)
 - Metrics (request count, latency, error rates)
 - Additional load balancing strategies (least connections, weighted)
