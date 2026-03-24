@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/singh-sidharth/load-balancer/internal/balancer"
@@ -22,11 +23,7 @@ func main() {
 	// 1. Run simple local servers (see cmd/backend)
 	// 2. Or temporarily replace these with public URLs (health checks will be limited)
 
-	rawBackends := []string{
-		"http://localhost:8081",
-		"http://localhost:8082",
-		"http://localhost:8083",
-	}
+	rawBackends := loadBackendsFromEnv()
 
 	var servers []server.Server
 	for _, raw := range rawBackends {
@@ -93,4 +90,25 @@ func main() {
 	if err := http.ListenAndServe(serverAddr, handler); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
+}
+
+func loadBackendsFromEnv() []string {
+	backendsEnv := os.Getenv("BACKENDS")
+	if backendsEnv == "" {
+		return []string{
+			"http://localhost:8081",
+			"http://localhost:8082",
+			"http://localhost:8083",
+		}
+	}
+
+	parts := strings.Split(backendsEnv, ",")
+	var backends []string
+	for _, part := range parts {
+		trimmed := strings.TrimSpace(part)
+		if trimmed != "" {
+			backends = append(backends, trimmed)
+		}
+	}
+	return backends
 }
