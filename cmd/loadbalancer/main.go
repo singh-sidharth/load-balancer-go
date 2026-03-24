@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -33,14 +32,26 @@ func main() {
 	for _, raw := range rawBackends {
 		srv, err := server.New(raw)
 		if err != nil {
-			fmt.Printf("Error creating server for %s: %v\n", raw, err)
+			log.Printf("failed to create backend %s: %v", raw, err)
 			continue
 		}
 		servers = append(servers, srv)
 	}
 
-	// Do an initial synchronous health check before serving traffic.
-	// This avoids routing requests based on assumed backend state.
+	// Fail if not backends were created.
+	if len(servers) == 0 {
+		log.Fatal("no valid backend servers configured")
+	}
+
+	// Perform an initial synchronous health check before serving traffic.
+	//
+	// This ensures backend health state is initialized before any request routing.
+	// Without this, backends may be treated as healthy until the first background
+	// health check runs, causing requests to be routed to unreachable servers.
+	//
+	// This prevents a startup-time correctness bug and makes the initialization
+	// order explicit.
+
 	healthClient := &http.Client{
 		Timeout: 1 * time.Second,
 	}
@@ -59,10 +70,10 @@ func main() {
 		srv, err := lb.NextServer()
 		if err != nil {
 			if errors.Is(err, balancer.ErrNoHealthyBackends) {
-				http.Error(w, "Service unavailable", http.StatusServiceUnavailable)
+				http.Error(w, "service unavailable", http.StatusServiceUnavailable)
 				return
 			}
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			http.Error(w, "internal server error", http.StatusInternalServerError)
 			return
 		}
 		srv.Serve(w, r)

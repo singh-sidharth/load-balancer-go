@@ -6,17 +6,21 @@ import (
 )
 
 func CheckHealth(s Server, client *http.Client) bool {
-	resp, err := client.Get(s.Address() + "/health")
+	req, err := http.NewRequest(http.MethodGet, s.Address()+"/health", nil)
+	if err != nil {
+		s.SetAlive(false)
+		return false
+	}
 
-	//health check failed, mark server as unhealthy
-	//failure is when backend it not reachable due to network error, timeout...
+	resp, err := client.Do(req)
+	// Health check failed because the backend is unreachable due to network error or timeout.
 	if err != nil {
 		s.SetAlive(false)
 		return false
 	}
 	defer resp.Body.Close()
 
-	// failure when backend is reachable
+	// Backend is reachable, but health status is unhealthy if it returns non-2xx.
 	healthy := resp.StatusCode >= 200 && resp.StatusCode < 300
 	s.SetAlive(healthy)
 
@@ -32,10 +36,9 @@ func StartHealthCheck(servers []Server, interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
-	for {
+	for range ticker.C {
 		for _, srv := range servers {
 			CheckHealth(srv, client)
 		}
-		<-ticker.C
 	}
 }

@@ -18,7 +18,7 @@ type Server interface {
 	Serve(http.ResponseWriter, *http.Request)
 }
 
-// Backend server represents managed backend servers in the load balancer.
+// // BackendServer represents an upstream backend managed by the load balancer.
 type BackendServer struct {
 	url   *url.URL
 	proxy *httputil.ReverseProxy
@@ -27,7 +27,7 @@ type BackendServer struct {
 	alive bool
 }
 
-// Returns a new instance of BackendServer.
+// New creates a BackendServer for the given upstream URL.
 func New(rawURL string) (*BackendServer, error) {
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
@@ -68,7 +68,7 @@ func (s *BackendServer) Address() string {
 	return s.url.String()
 }
 
-// IsAlive returns the health status
+// IsAlive returns the health status.
 func (s *BackendServer) IsAlive() bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
