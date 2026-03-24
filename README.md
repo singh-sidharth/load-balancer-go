@@ -79,6 +79,69 @@ curl http://localhost:8080
 
 Requests should be distributed across backends
 
+## Running Tests
+
+This project includes both unit tests and integration tests to validate correctness and failover behavior.
+
+### Run all tests
+
+From the project root directory:
+
+```bash
+go test ./... -v
+```
+
+### What is covered
+
+- Round-robin load balancing correctness
+- Skipping unhealthy backends
+- Behavior when no backends are available
+- Proxy failure handling and failover across requests
+
+## Load Testing
+
+Basic load testing can be performed using `hey`:
+
+```bash
+hey -n 1000 -c 10 http://localhost:8080
+```
+
+This simulates concurrent traffic and helps evaluate:
+
+- requests per second (RPS)
+- latency distribution (p50, p95, p99)
+- error rates under load
+
+> _This project focuses on correctness and failure handling rather than raw throughput. Load testing is used to validate behavior under concurrent traffic._
+
+### Scenarios to try
+
+- All backends healthy → baseline throughput and latency
+- One backend down → verify failover behavior
+- All backends down → expect `503 Service Unavailable`
+
+### Installation
+
+Mac:
+
+```bash
+brew install hey
+```
+
+Linux:
+
+```bash
+go install github.com/rakyll/hey@latest
+```
+
+Windows (PowerShell):
+
+```powershell
+go install github.com/rakyll/hey@latest
+```
+
+> Make sure your Go bin directory is in your **PATH** after using go install.
+
 ## Current Limitations
 
 - No retry logic for failed requests (fail-fast on upstream failure)
