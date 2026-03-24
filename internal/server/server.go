@@ -1,10 +1,13 @@
 package server
 
 import (
+	"log"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"sync"
+	"time"
 )
 
 // Server defines methods that a backend server must implement.
@@ -31,11 +34,33 @@ func New(rawURL string) (*BackendServer, error) {
 		return nil, err
 	}
 
-	return &BackendServer{
+	s := &BackendServer{
 		url:   parsedURL,
-		proxy: httputil.NewSingleHostReverseProxy(parsedURL),
 		alive: true,
-	}, nil
+	}
+
+	transport := &http.Transport{
+		DialContext: (&net.Dialer{
+			Timeout: 1 * time.Second,
+		}).DialContext,
+		ResponseHeaderTimeout: 2 * time.Second,
+		IdleConnTimeout:       30 * time.Second,
+		MaxIdleConns:          100,
+		MaxIdleConnsPerHost:   10,
+	}
+
+	proxy := httputil.NewSingleHostReverseProxy(parsedURL)
+	proxy.Transport = transport
+
+	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+		s.SetAlive(false)
+		log.Printf("proxy error: backend=%s err=%v", s.Address(), err)
+		http.Error(w, "bad gateway", http.StatusBadGateway)
+	}
+
+	s.proxy = proxy
+
+	return s, nil
 }
 
 // Address returns the address of the server.
