@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"sync"
 	"time"
+
+	"github.com/singh-sidharth/load-balancer/internal/metrics"
 )
 
 // Server defines methods that a backend server must implement.
@@ -54,6 +56,8 @@ func New(rawURL string) (*BackendServer, error) {
 
 	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
 		s.SetAlive(false)
+		metrics.BackendHealth.WithLabelValues(s.Address()).Set(0)
+		metrics.ProxyErrorsTotal.WithLabelValues(s.Address()).Inc()
 		log.Printf("proxy error: backend=%s err=%v", s.Address(), err)
 		http.Error(w, "bad gateway", http.StatusBadGateway)
 	}
