@@ -161,6 +161,91 @@ This project includes scripts to simulate backend failure during active load.
 ./scripts/run_failover_test.sh 8083 2 5s 100
 ```
 
+### Example: kill a backend manually
+
+You can also terminate a backend process directly after a delay:
+
+```bash
+./scripts/kill_backend_after.sh 8083 2
+```
+
+This will:
+
+- wait for 2 seconds
+- find any process listening on port `8083`
+- terminate it gracefully
+
+Useful for testing failure handling without running a full load test.
+
+## Observability
+
+This project exposes Prometheus metrics to help analyze system behavior under load and failure.
+
+### Metrics Endpoint
+
+Metrics are available at:
+
+```bash
+http://localhost:8080/metrics
+```
+
+### Key Metrics
+
+- `lb_requests_total`  
+  Total requests handled by the load balancer, labeled by method, path, status, and backend.
+
+- `lb_request_duration_seconds`  
+  Request latency histogram for measuring p50, p95, and p99.
+
+- `lb_proxy_errors_total`  
+  Total proxy errors per backend.
+
+- `lb_backend_health`  
+  Backend health status (1 = healthy, 0 = unhealthy).
+
+### Running Prometheus Locally
+
+Start Prometheus using Docker:
+
+```bash
+docker compose up
+```
+
+Then open:
+
+```text
+http://localhost:9090
+```
+
+### Example Queries
+
+Requests per second (RPS):
+
+```promql
+rate(lb_requests_total[10s])
+```
+
+Per-backend traffic distribution:
+
+```promql
+sum by (backend) (rate(lb_requests_total[10s]))
+```
+
+Backend health:
+
+```promql
+lb_backend_health
+```
+
+### What to Observe
+
+- Traffic distribution across backends
+- Failover behavior when a backend goes down
+- Error spikes during failure windows
+- Latency changes under load
+
+> Observability is used here to validate correctness, understand system behavior, and reason about performance under failure scenarios.
+
 ## Current Limitations
 
 - No retry logic for failed requests (fail-fast on upstream failure)
