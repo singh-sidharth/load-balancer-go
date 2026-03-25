@@ -93,6 +93,7 @@ func main() {
 				r.Method,
 				r.URL.Path,
 				strconv.Itoa(rec.statusCode),
+				"none",
 			).Inc()
 
 			metrics.RequestDuration.WithLabelValues(
@@ -109,6 +110,7 @@ func main() {
 			r.Method,
 			r.URL.Path,
 			strconv.Itoa(rec.statusCode),
+			srv.Address(),
 		).Inc()
 
 		metrics.RequestDuration.WithLabelValues(

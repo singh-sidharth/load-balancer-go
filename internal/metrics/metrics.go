@@ -8,7 +8,7 @@ var (
 			Name: "lb_requests_total",
 			Help: "Total number of requests handled by the load balancer.",
 		},
-		[]string{"method", "path", "status"},
+		[]string{"method", "path", "status", "backend"},
 	)
 
 	RequestDuration = prometheus.NewHistogramVec(
